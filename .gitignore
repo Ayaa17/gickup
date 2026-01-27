@@ -5,3 +5,4 @@ conf.yml
 .idea
 dist/
 .vscode
+webui/node_modules/

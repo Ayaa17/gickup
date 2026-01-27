@@ -74,6 +74,21 @@ docker-compose up
 ## Compile the binary version
 `go build .`
 
+## Web UI (local wrapper)
+Build the web UI assets:
+```bash
+cd webui
+npm install
+npm run build
+```
+
+Build and run the wrapper:
+```bash
+go build -o gickup-web ./cmd/gickup-web
+./gickup-web --conf conf.yml --listen :3780
+```
+The wrapper runs `gickup` via `exec.Command()`. Ensure `gickup` is on PATH or pass `--gickup-bin`.
+
 ## Compile the Docker Image
 ```bash
 git clone https://github.com/cooperspencer/gickup.git
