@@ -89,6 +89,14 @@ go build -o gickup-web ./cmd/gickup-web
 ```
 The wrapper runs `gickup` via `exec.Command()`. Ensure `gickup` is on PATH or pass `--gickup-bin`.
 
+### Web UI Usage
+Open `http://localhost:3780` and use the **Config Builder (GitHub Source)** panel to fill in GitHub + Local settings.
+Click **Generate YAML** to populate the Config Editor, then:
+- **Save Config** to write `conf.yml`
+- **Validate** to run a dry-run
+- **Download** to export the YAML
+Use **Start Backup** / **Stop Backup** to control runs and view history/logs/metrics.
+
 ## Compile the Docker Image
 ```bash
 git clone https://github.com/cooperspencer/gickup.git

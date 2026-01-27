@@ -387,7 +387,7 @@ func (s *server) validateConfig(content []byte) (bool, string) {
 	}
 	file.Close()
 
-	cmd := exec.Command(s.gickupBin, "--dryrun", "--conf", file.Name())
+	cmd := exec.Command(s.gickupBin, "--dryrun", file.Name())
 	cmd.Dir = filepath.Dir(s.configPath)
 	output, err := cmd.CombinedOutput()
 	if err != nil {

@@ -31,6 +31,153 @@
     </section>
 
     <section class="panel">
+      <h2>Config Builder (GitHub Source)</h2>
+      <div class="split">
+        <div class="panel inset">
+          <h3>Source: GitHub</h3>
+          <div class="form-grid">
+            <label>
+              Token
+              <input v-model="form.github.token" type="text" placeholder="ghp_..." />
+            </label>
+            <label>
+              Token File
+              <input v-model="form.github.tokenFile" type="text" placeholder="token.txt" />
+            </label>
+            <label>
+              User (target owner)
+              <input v-model="form.github.user" type="text" placeholder="some-user" />
+            </label>
+            <label>
+              Username (clone auth)
+              <input v-model="form.github.username" type="text" placeholder="your-user" />
+            </label>
+            <label>
+              Password (clone auth)
+              <input v-model="form.github.password" type="password" placeholder="password or token" />
+            </label>
+            <label class="checkbox">
+              <input v-model="form.github.ssh" type="checkbox" />
+              Use SSH
+            </label>
+            <label>
+              SSH Key
+              <input v-model="form.github.sshkey" type="text" placeholder="C:\\path\\to\\id_rsa" />
+            </label>
+            <label>
+              Include Repos (comma separated)
+              <input v-model="form.github.include" type="text" placeholder="repo-a, repo-b" />
+            </label>
+            <label>
+              Exclude Repos (comma separated)
+              <input v-model="form.github.exclude" type="text" placeholder="repo-x, repo-y" />
+            </label>
+            <label>
+              Include Orgs (comma separated)
+              <input v-model="form.github.includeOrgs" type="text" placeholder="org-a, org-b" />
+            </label>
+            <label>
+              Exclude Orgs (comma separated)
+              <input v-model="form.github.excludeOrgs" type="text" placeholder="org-x, org-y" />
+            </label>
+            <label class="checkbox">
+              <input v-model="form.github.wiki" type="checkbox" />
+              Include Wiki
+            </label>
+            <label class="checkbox">
+              <input v-model="form.github.issues" type="checkbox" />
+              Include Issues (local only)
+            </label>
+            <label class="checkbox">
+              <input v-model="form.github.starred" type="checkbox" />
+              Include Starred
+            </label>
+            <label class="checkbox">
+              <input v-model="form.github.gists" type="checkbox" />
+              Include Gists
+            </label>
+          </div>
+          <h3 style="margin-top: 16px">Filter</h3>
+          <div class="form-grid">
+            <label>
+              Stars (min)
+              <input v-model.number="form.github.filterStars" type="number" min="0" />
+            </label>
+            <label>
+              Last Activity (e.g. 1y, 6M, 30d)
+              <input v-model="form.github.filterLastActivity" type="text" placeholder="1y" />
+            </label>
+            <label>
+              Languages (comma separated)
+              <input v-model="form.github.filterLanguages" type="text" placeholder="go, java" />
+            </label>
+            <label class="checkbox">
+              <input v-model="form.github.filterExcludeArchived" type="checkbox" />
+              Exclude Archived
+            </label>
+            <label class="checkbox">
+              <input v-model="form.github.filterExcludeForks" type="checkbox" />
+              Exclude Forks
+            </label>
+          </div>
+        </div>
+
+        <div class="panel inset">
+          <h3>Destination: Local</h3>
+          <div class="form-grid">
+            <label>
+              Path
+              <input v-model="form.local.path" type="text" placeholder="D:\\gickup-backup" />
+            </label>
+            <label class="checkbox">
+              <input v-model="form.local.bare" type="checkbox" />
+              Bare
+            </label>
+            <label class="checkbox">
+              <input v-model="form.local.mirror" type="checkbox" />
+              Mirror
+            </label>
+            <label class="checkbox">
+              <input v-model="form.local.structured" type="checkbox" />
+              Structured
+            </label>
+            <label class="checkbox">
+              <input v-model="form.local.zip" type="checkbox" />
+              Zip
+            </label>
+            <label>
+              Keep (days)
+              <input v-model.number="form.local.keep" type="number" min="0" />
+            </label>
+            <label class="checkbox">
+              <input v-model="form.local.lfs" type="checkbox" />
+              LFS
+            </label>
+          </div>
+          <h3 style="margin-top: 16px">Schedule & Metrics</h3>
+          <div class="form-grid">
+            <label>
+              Cron
+              <input v-model="form.cron" type="text" placeholder="0 22 * * *" />
+            </label>
+            <label>
+              Prometheus Listen
+              <input v-model="form.prometheus.listen" type="text" placeholder=":6178" />
+            </label>
+            <label>
+              Prometheus Endpoint
+              <input v-model="form.prometheus.endpoint" type="text" placeholder="/metrics" />
+            </label>
+          </div>
+          <div class="controls" style="margin-top: 12px">
+            <button class="btn" @click="applyForm">Generate YAML</button>
+            <button class="btn secondary" @click="resetForm">Reset</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
       <h2>Config Editor</h2>
       <div class="split">
         <div>
@@ -132,6 +279,47 @@ const metrics = reactive({
   raw: ''
 })
 
+const defaultForm = () => ({
+  github: {
+    token: '',
+    tokenFile: '',
+    user: '',
+    username: '',
+    password: '',
+    ssh: false,
+    sshkey: '',
+    include: '',
+    exclude: '',
+    includeOrgs: '',
+    excludeOrgs: '',
+    wiki: false,
+    issues: false,
+    starred: false,
+    gists: false,
+    filterStars: 0,
+    filterLastActivity: '',
+    filterLanguages: '',
+    filterExcludeArchived: false,
+    filterExcludeForks: false
+  },
+  local: {
+    path: '',
+    bare: false,
+    mirror: false,
+    structured: false,
+    zip: false,
+    keep: 0,
+    lfs: false
+  },
+  cron: '',
+  prometheus: {
+    listen: '',
+    endpoint: ''
+  }
+})
+
+const form = reactive(defaultForm())
+
 let poller
 
 const fetchJSON = async (url, options) => {
@@ -166,6 +354,129 @@ const validateConfig = async () => {
   })
   validation.valid = data.valid
   validation.output = data.output
+}
+
+const splitList = (value) =>
+  value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+
+const yamlLine = (key, value, indent) => {
+  const pad = ' '.repeat(indent)
+  return `${pad}${key}: ${value}`
+}
+
+const yamlList = (key, values, indent) => {
+  const pad = ' '.repeat(indent)
+  const listPad = ' '.repeat(indent + 2)
+  if (!values || values.length === 0) return []
+  return [`${pad}${key}:`, ...values.map((v) => `${listPad}- ${v}`)]
+}
+
+const applyForm = () => {
+  const lines = []
+  lines.push('source:')
+  lines.push('  github:')
+  lines.push('    -')
+
+  const gh = form.github
+  const addField = (key, value) => {
+    if (value === '' || value === null || value === undefined) return
+    lines.push(yamlLine(key, value, 6))
+  }
+  const addBool = (key, value) => {
+    if (value === true) {
+      lines.push(yamlLine(key, 'true', 6))
+    }
+  }
+
+  addField('token', gh.token)
+  addField('token_file', gh.tokenFile)
+  addField('user', gh.user)
+  addField('username', gh.username)
+  addField('password', gh.password)
+  addBool('ssh', gh.ssh)
+  addField('sshkey', gh.sshkey)
+
+  yamlList('include', splitList(gh.include), 6).forEach((l) => lines.push(l))
+  yamlList('exclude', splitList(gh.exclude), 6).forEach((l) => lines.push(l))
+  yamlList('includeorgs', splitList(gh.includeOrgs), 6).forEach((l) => lines.push(l))
+  yamlList('excludeorgs', splitList(gh.excludeOrgs), 6).forEach((l) => lines.push(l))
+
+  addBool('wiki', gh.wiki)
+  addBool('issues', gh.issues)
+  addBool('starred', gh.starred)
+  addBool('gists', gh.gists)
+
+  const filterLines = []
+  if (gh.filterStars && gh.filterStars > 0) {
+    filterLines.push(yamlLine('stars', gh.filterStars, 8))
+  }
+  if (gh.filterLastActivity) {
+    filterLines.push(yamlLine('lastactivity', gh.filterLastActivity, 8))
+  }
+  const languages = splitList(gh.filterLanguages)
+  if (languages.length > 0) {
+    filterLines.push('        languages:')
+    languages.forEach((lang) => {
+      filterLines.push(`          - ${lang}`)
+    })
+  }
+  if (gh.filterExcludeArchived) {
+    filterLines.push(yamlLine('excludearchived', 'true', 8))
+  }
+  if (gh.filterExcludeForks) {
+    filterLines.push(yamlLine('excludeforks', 'true', 8))
+  }
+  if (filterLines.length > 0) {
+    lines.push('      filter:')
+    filterLines.forEach((l) => lines.push(l))
+  }
+
+  lines.push('destination:')
+  lines.push('  local:')
+  lines.push('    -')
+  const local = form.local
+  const addLocalField = (key, value) => {
+    if (value === '' || value === null || value === undefined) return
+    lines.push(yamlLine(key, value, 6))
+  }
+  const addLocalBool = (key, value) => {
+    if (value === true) {
+      lines.push(yamlLine(key, 'true', 6))
+    }
+  }
+  addLocalField('path', local.path)
+  addLocalBool('bare', local.bare)
+  addLocalBool('mirror', local.mirror)
+  addLocalBool('structured', local.structured)
+  addLocalBool('zip', local.zip)
+  if (local.keep && local.keep > 0) {
+    lines.push(yamlLine('keep', local.keep, 6))
+  }
+  addLocalBool('lfs', local.lfs)
+
+  if (form.cron) {
+    lines.push(`cron: "${form.cron}"`)
+  }
+
+  if (form.prometheus.listen || form.prometheus.endpoint) {
+    lines.push('metrics:')
+    lines.push('  prometheus:')
+    if (form.prometheus.endpoint) {
+      lines.push(`    endpoint: ${form.prometheus.endpoint}`)
+    }
+    if (form.prometheus.listen) {
+      lines.push(`    listen_addr: "${form.prometheus.listen}"`)
+    }
+  }
+
+  configText.value = `${lines.join('\n')}\n`
+}
+
+const resetForm = () => {
+  Object.assign(form, defaultForm())
 }
 
 const startBackup = async () => {
@@ -264,3 +575,4 @@ onBeforeUnmount(() => {
   clearInterval(poller)
 })
 </script>
+
