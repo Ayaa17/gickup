@@ -50,201 +50,198 @@
     </section>
 
     <section v-if="activeTab === 'config'" class="panel">
-      <h2>Config Builder (GitHub Source)</h2>
-      <div class="split">
-        <div class="panel inset">
-          <h3>Source: GitHub</h3>
-          <div class="form-grid">
-            <label>
-              Token
-              <input v-model="form.github.token" type="text" placeholder="ghp_..." />
-            </label>
-            <label>
-              Token File
-              <input v-model="form.github.tokenFile" type="text" placeholder="token.txt" />
-            </label>
-            <div v-if="tokenConflict" class="hint warn">
-              Use either Token or Token File (not both).
-            </div>
-            <label>
-              User (target owner)
-              <input v-model="form.github.user" type="text" placeholder="some-user" />
-            </label>
-            <label>
-              Username (clone auth)
-              <input v-model="form.github.username" type="text" placeholder="your-user" />
-            </label>
-            <label>
-              Password (clone auth)
-              <input v-model="form.github.password" type="password" placeholder="password or token" />
-            </label>
-            <label class="checkbox">
-              <input v-model="form.github.ssh" type="checkbox" />
-              Use SSH
-            </label>
-            <label>
-              SSH Key
-              <input v-model="form.github.sshkey" type="text" placeholder="C:\\path\\to\\id_rsa" />
-            </label>
-          </div>
-        </div>
-
-        <div class="panel inset">
-          <h3>Destination: Local</h3>
-          <div class="form-grid">
-            <label>
-              Path
-              <input v-model="form.local.path" type="text" placeholder="D:\\gickup-backup" />
-            </label>
-          </div>
-
-          <h3 style="margin-top: 16px">Schedule & Metrics</h3>
-          <div class="form-grid">
-            <label>
-              Cron
-              <input v-model="form.cron" type="text" placeholder="0 22 * * *" />
-            </label>
-            <label>
-              Prometheus Listen
-              <input v-model="form.prometheus.listen" type="text" placeholder=":6178" />
-            </label>
-            <label>
-              Prometheus Endpoint
-              <input v-model="form.prometheus.endpoint" type="text" placeholder="/metrics" />
-            </label>
-          </div>
-          <div class="controls" style="margin-top: 12px">
-            <button class="btn" @click="applyForm">Generate YAML</button>
-            <button class="btn secondary" @click="fillFormFromYaml">Load From YAML</button>
-            <button class="btn secondary" @click="resetForm">Reset</button>
-            <button
-              v-if="showGoDashboard"
-              class="btn secondary"
-              @click="setTab('dashboard')"
-            >
-              Go to Dashboard
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="extend">
-        <button class="extend-toggle" @click="showExtend = !showExtend">
-          Extend Settings
-          <span>{{ showExtend ? 'Hide' : 'Show' }}</span>
-        </button>
-        <div v-if="showExtend" class="extend-body">
+      <div class="config-grid">
+        <div class="config-left">
+          <h2>Config Builder (GitHub Source)</h2>
           <div class="split">
             <div class="panel inset">
-              <h3>GitHub Options</h3>
+              <h3>Source: GitHub</h3>
               <div class="form-grid">
                 <label>
-                  Include Repos (comma separated)
-                  <input v-model="form.github.include" type="text" placeholder="repo-a, repo-b" />
+                  Token
+                  <input v-model="form.github.token" type="text" placeholder="ghp_..." />
                 </label>
                 <label>
-                  Exclude Repos (comma separated)
-                  <input v-model="form.github.exclude" type="text" placeholder="repo-x, repo-y" />
+                  Token File
+                  <input v-model="form.github.tokenFile" type="text" placeholder="token.txt" />
+                </label>
+                <div v-if="tokenConflict" class="hint warn">
+                  Use either Token or Token File (not both).
+                </div>
+                <label>
+                  User (target owner)
+                  <input v-model="form.github.user" type="text" placeholder="some-user" />
                 </label>
                 <label>
-                  Include Orgs (comma separated)
-                  <input v-model="form.github.includeOrgs" type="text" placeholder="org-a, org-b" />
+                  Username (clone auth)
+                  <input v-model="form.github.username" type="text" placeholder="your-user" />
                 </label>
                 <label>
-                  Exclude Orgs (comma separated)
-                  <input v-model="form.github.excludeOrgs" type="text" placeholder="org-x, org-y" />
+                  Password (clone auth)
+                  <input v-model="form.github.password" type="password" placeholder="password or token" />
                 </label>
                 <label class="checkbox">
-                  <input v-model="form.github.wiki" type="checkbox" />
-                  Include Wiki
-                </label>
-                <label class="checkbox">
-                  <input v-model="form.github.issues" type="checkbox" />
-                  Include Issues (local only)
-                </label>
-                <label class="checkbox">
-                  <input v-model="form.github.starred" type="checkbox" />
-                  Include Starred
-                </label>
-                <label class="checkbox">
-                  <input v-model="form.github.gists" type="checkbox" />
-                  Include Gists
-                </label>
-              </div>
-
-              <h3 style="margin-top: 16px">Filter</h3>
-              <div class="form-grid">
-                <label>
-                  Stars (min)
-                  <input v-model.number="form.github.filterStars" type="number" min="0" />
+                  <input v-model="form.github.ssh" type="checkbox" />
+                  Use SSH
                 </label>
                 <label>
-                  Last Activity (e.g. 1y, 6M, 30d)
-                  <input v-model="form.github.filterLastActivity" type="text" placeholder="1y" />
-                </label>
-                <label>
-                  Languages (comma separated)
-                  <input v-model="form.github.filterLanguages" type="text" placeholder="go, java" />
-                </label>
-                <label class="checkbox">
-                  <input v-model="form.github.filterExcludeArchived" type="checkbox" />
-                  Exclude Archived
-                </label>
-                <label class="checkbox">
-                  <input v-model="form.github.filterExcludeForks" type="checkbox" />
-                  Exclude Forks
+                  SSH Key
+                  <input v-model="form.github.sshkey" type="text" placeholder="C:\\path\\to\\id_rsa" />
                 </label>
               </div>
             </div>
 
             <div class="panel inset">
-              <h3>Local Options</h3>
+              <h3>Destination: Local</h3>
               <div class="form-grid">
-                <label class="checkbox">
-                  <input v-model="form.local.bare" type="checkbox" />
-                  Bare
+                <label>
+                  Path
+                  <input v-model="form.local.path" type="text" placeholder="D:\\gickup-backup" />
                 </label>
-                <label class="checkbox">
-                  <input v-model="form.local.mirror" type="checkbox" />
-                  Mirror
-                </label>
-                <label class="checkbox">
-                  <input v-model="form.local.structured" type="checkbox" />
-                  Structured
-                </label>
-                <label class="checkbox">
-                  <input v-model="form.local.zip" type="checkbox" />
-                  Zip
+              </div>
+
+              <h3 style="margin-top: 16px">Schedule & Metrics</h3>
+              <div class="form-grid">
+                <label>
+                  Cron
+                  <input v-model="form.cron" type="text" placeholder="0 22 * * *" />
                 </label>
                 <label>
-                  Keep (days)
-                  <input v-model.number="form.local.keep" type="number" min="0" />
+                  Prometheus Listen
+                  <input v-model="form.prometheus.listen" type="text" placeholder=":6178" />
                 </label>
-                <label class="checkbox">
-                  <input v-model="form.local.lfs" type="checkbox" />
-                  LFS
+                <label>
+                  Prometheus Endpoint
+                  <input v-model="form.prometheus.endpoint" type="text" placeholder="/metrics" />
                 </label>
+              </div>
+              <div class="controls" style="margin-top: 12px">
+                <button class="btn secondary" @click="triggerFilePicker">Load From YAML</button>
+<input ref="fileInputRef" class="file-input" type="file" accept=".yml,.yaml" @change="handleFileSelect" />
+                <button class="btn secondary" @click="resetForm">Reset</button>
+                              </div>
+            </div>
+          </div>
+
+          <div class="extend">
+            <button class="extend-toggle" @click="showExtend = !showExtend">
+              Extend Settings
+              <span>{{ showExtend ? 'Hide' : 'Show' }}</span>
+            </button>
+            <div v-if="showExtend" class="extend-body">
+              <div class="split">
+                <div class="panel inset">
+                  <h3>GitHub Options</h3>
+                  <div class="form-grid">
+                    <label>
+                      Include Repos (comma separated)
+                      <input v-model="form.github.include" type="text" placeholder="repo-a, repo-b" />
+                    </label>
+                    <label>
+                      Exclude Repos (comma separated)
+                      <input v-model="form.github.exclude" type="text" placeholder="repo-x, repo-y" />
+                    </label>
+                    <label>
+                      Include Orgs (comma separated)
+                      <input v-model="form.github.includeOrgs" type="text" placeholder="org-a, org-b" />
+                    </label>
+                    <label>
+                      Exclude Orgs (comma separated)
+                      <input v-model="form.github.excludeOrgs" type="text" placeholder="org-x, org-y" />
+                    </label>
+                    <label class="checkbox">
+                      <input v-model="form.github.wiki" type="checkbox" />
+                      Include Wiki
+                    </label>
+                    <label class="checkbox">
+                      <input v-model="form.github.issues" type="checkbox" />
+                      Include Issues (local only)
+                    </label>
+                    <label class="checkbox">
+                      <input v-model="form.github.starred" type="checkbox" />
+                      Include Starred
+                    </label>
+                    <label class="checkbox">
+                      <input v-model="form.github.gists" type="checkbox" />
+                      Include Gists
+                    </label>
+                  </div>
+
+                  <h3 style="margin-top: 16px">Filter</h3>
+                  <div class="form-grid">
+                    <label>
+                      Stars (min)
+                      <input v-model.number="form.github.filterStars" type="number" min="0" />
+                    </label>
+                    <label>
+                      Last Activity (e.g. 1y, 6M, 30d)
+                      <input v-model="form.github.filterLastActivity" type="text" placeholder="1y" />
+                    </label>
+                    <label>
+                      Languages (comma separated)
+                      <input v-model="form.github.filterLanguages" type="text" placeholder="go, java" />
+                    </label>
+                    <label class="checkbox">
+                      <input v-model="form.github.filterExcludeArchived" type="checkbox" />
+                      Exclude Archived
+                    </label>
+                    <label class="checkbox">
+                      <input v-model="form.github.filterExcludeForks" type="checkbox" />
+                      Exclude Forks
+                    </label>
+                  </div>
+                </div>
+
+                <div class="panel inset">
+                  <h3>Local Options</h3>
+                  <div class="form-grid">
+                    <label class="checkbox">
+                      <input v-model="form.local.bare" type="checkbox" />
+                      Bare
+                    </label>
+                    <label class="checkbox">
+                      <input v-model="form.local.mirror" type="checkbox" />
+                      Mirror
+                    </label>
+                    <label class="checkbox">
+                      <input v-model="form.local.structured" type="checkbox" />
+                      Structured
+                    </label>
+                    <label class="checkbox">
+                      <input v-model="form.local.zip" type="checkbox" />
+                      Zip
+                    </label>
+                    <label>
+                      Keep (days)
+                      <input v-model.number="form.local.keep" type="number" min="0" />
+                    </label>
+                    <label class="checkbox">
+                      <input v-model="form.local.lfs" type="checkbox" />
+                      LFS
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
 
-    <section v-if="activeTab === 'config'" class="panel">
-      <h2>Config Editor</h2>
-      <div class="split">
-        <div>
-          <textarea v-model="configText" spellcheck="false"></textarea>
+        <div class="config-right panel inset">
+          <div class="panel-title">
+            <h2>Live YAML</h2>
+          </div>
+          <div class="yaml-box">
+            <pre>{{ liveYaml }}</pre>
+          </div>
           <div class="controls" style="margin-top: 12px">
             <button class="btn" @click="saveConfig">Save Config</button>
             <button class="btn secondary" @click="validateConfig">Validate</button>
-            <button class="btn secondary" @click="clearValidation">Clear Output</button>
             <a class="btn secondary" href="/api/config/download">Download</a>
           </div>
-        </div>
-        <div>
-          <h3>Validation Output</h3>
+          <div class="panel-title" style="margin-top: 16px">
+            <h3>Validation Output</h3>
+            <button class="btn secondary" @click="clearValidation">Clear Output</button>
+          </div>
           <div class="log-box">
             <div v-if="validation.valid === true" class="badge">Valid</div>
             <div v-else-if="validation.valid === false" class="badge warn">Invalid</div>
@@ -388,8 +385,7 @@ const status = reactive({ running: false })
 const history = ref([])
 const logs = ref([])
 const logsHtml = ref('')
-const historySeparator = ' \u00b7 '
-const placeholder = '\u2014'
+const fileInputRef = ref(null)
 const metrics = reactive({
   sources: null,
   destinations: null,
@@ -405,13 +401,16 @@ const metrics = reactive({
   slowRepos: [],
   raw: ''
 })
+
 const activeTab = ref('config')
 const showExtend = ref(false)
-const showGoDashboard = ref(false)
 
 const ansiConverter = new AnsiToHtml({ fg: '#e2e8f0', bg: '#0f172a', newline: true })
 
 const renderAnsi = (value) => ansiConverter.toHtml(value || '')
+
+const historySeparator = ' \u00b7 '
+const placeholder = '\u2014'
 
 const defaultForm = () => ({
   github: {
@@ -458,6 +457,8 @@ const tokenConflict = computed(
   () => form.github.token.trim() !== '' && form.github.tokenFile.trim() !== ''
 )
 
+const liveYaml = computed(() => buildYaml())
+
 let poller
 
 const fetchJSON = async (url, options) => {
@@ -497,7 +498,7 @@ const saveConfig = async () => {
   await fetchJSON('/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'text/yaml' },
-    body: configText.value
+    body: liveYaml.value
   })
 }
 
@@ -505,7 +506,7 @@ const validateConfig = async () => {
   const data = await fetchJSON('/api/validate', {
     method: 'POST',
     headers: { 'Content-Type': 'text/yaml' },
-    body: configText.value
+    body: liveYaml.value
   })
   validation.valid = data.valid
   validation.output = renderAnsi(data.output || '')
@@ -534,7 +535,7 @@ const yamlList = (key, values, indent) => {
   return [`${pad}${key}:`, ...values.map((v) => `${listPad}- ${v}`)]
 }
 
-const applyForm = () => {
+const buildYaml = () => {
   const lines = []
   lines.push('source:')
   lines.push('  github:')
@@ -632,8 +633,7 @@ const applyForm = () => {
     }
   }
 
-  configText.value = `${lines.join('\n')}\n`
-  showGoDashboard.value = true
+  return `${lines.join('\n')}\n`
 }
 
 const resetForm = () => {
@@ -696,6 +696,21 @@ const fillFormFromYaml = () => {
   next.prometheus.endpoint = parsed?.metrics?.prometheus?.endpoint || ''
 
   Object.assign(form, next)
+}
+
+const triggerFilePicker = () => {
+  if (fileInputRef.value) {
+    fileInputRef.value.click()
+  }
+}
+
+const handleFileSelect = async (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+  const text = await file.text()
+  configText.value = text
+  fillFormFromYaml()
+  event.target.value = ''
 }
 
 const startBackup = async () => {
@@ -906,9 +921,6 @@ onBeforeUnmount(() => {
   clearInterval(poller)
 })
 </script>
-
-
-
 
 
 
