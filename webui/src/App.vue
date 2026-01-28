@@ -314,7 +314,62 @@
           <h4>Repos OK</h4>
           <strong>{{ metrics.repoOk ?? placeholder }}</strong>
         </div>
+        <div class="metric-card">
+          <h4>Repos Fail</h4>
+          <strong>{{ metrics.repoFail ?? placeholder }}</strong>
+        </div>
+        <div class="metric-card">
+          <h4>Repos Discovered</h4>
+          <strong>{{ metrics.reposDiscoveredTotal ?? placeholder }}</strong>
+        </div>
       </div>
+
+      <div class="metrics-detail">
+        <div class="metric-panel">
+          <h3>Repos Discovered</h3>
+          <div v-if="metrics.reposDiscovered.length === 0" class="meta">No data</div>
+          <div class="metric-list">
+            <div v-for="item in metrics.reposDiscovered" :key="item.name">
+              <span>{{ item.name }}</span>
+              <span>{{ item.value }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="metric-panel">
+          <h3>Source Backups</h3>
+          <div v-if="metrics.sourcesComplete.length === 0" class="meta">No data</div>
+          <div class="metric-list">
+            <div v-for="item in metrics.sourcesComplete" :key="item.name">
+              <span>{{ item.name }}</span>
+              <span>{{ item.value }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="metric-panel">
+          <h3>Destination Backups</h3>
+          <div v-if="metrics.destinationsComplete.length === 0" class="meta">No data</div>
+          <div class="metric-list">
+            <div v-for="item in metrics.destinationsComplete" :key="item.name">
+              <span>{{ item.name }}</span>
+              <span>{{ item.value }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="metric-panel">
+          <h3>Slowest Repos</h3>
+          <div v-if="metrics.slowRepos.length === 0" class="meta">No data</div>
+          <div class="metric-list">
+            <div v-for="item in metrics.slowRepos" :key="item.name">
+              <div>
+                <div>{{ item.name }}</div>
+                <div class="meta">{{ item.meta }}</div>
+              </div>
+              <span>{{ item.value }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="log-box metrics" style="margin-top: 16px">
         <pre>{{ metrics.raw || 'Metrics will appear once Prometheus is enabled and the backup is running.' }}</pre>
       </div>
@@ -342,9 +397,14 @@ const metrics = reactive({
   jobsComplete: null,
   avgDuration: null,
   repoOk: null,
+  repoFail: null,
+  reposDiscoveredTotal: null,
+  reposDiscovered: [],
+  sourcesComplete: [],
+  destinationsComplete: [],
+  slowRepos: [],
   raw: ''
 })
-
 const activeTab = ref('config')
 const showExtend = ref(false)
 const showGoDashboard = ref(false)
@@ -677,6 +737,24 @@ const clearLogs = async () => {
   logsHtml.value = ''
 }
 
+const parseLabelMap = (labelText) => {
+  if (!labelText) return {}
+  const map = {}
+  const parts = labelText.split(',')
+  parts.forEach((part) => {
+    const idx = part.indexOf('=')
+    if (idx === -1) return
+    const key = part.slice(0, idx).trim()
+    let value = part.slice(idx + 1).trim()
+    if (value.startsWith('"') && value.endsWith('"')) {
+      value = value.slice(1, -1)
+    }
+    value = value.replace(/\\\\/g, '\\').replace(/\\\"/g, '"')
+    map[key] = value
+  })
+  return map
+}
+
 const parseMetrics = (raw) => {
   const summary = {
     sources: null,
@@ -684,19 +762,33 @@ const parseMetrics = (raw) => {
     jobsStarted: null,
     jobsComplete: null,
     avgDuration: null,
-    repoOk: null
+    repoOk: null,
+    repoFail: null,
+    reposDiscoveredTotal: null,
+    reposDiscovered: [],
+    sourcesComplete: [],
+    destinationsComplete: [],
+    slowRepos: []
   }
 
   let durationSum = null
   let durationCount = null
   let repoOk = 0
+  let repoFail = 0
+
+  const reposDiscovered = {}
+  const sourcesComplete = {}
+  const destinationsComplete = {}
+  const repoTimes = []
 
   raw.split('\n').forEach((line) => {
     if (!line || line.startsWith('#')) return
-    const parts = line.trim().split(/\s+/)
-    if (parts.length < 2) return
-    const name = parts[0]
-    const value = Number(parts[parts.length - 1])
+    const match = line.match(/^(\w+)(?:\{([^}]*)\})?\s+([0-9.eE+-]+)$/)
+    if (!match) return
+
+    const name = match[1]
+    const labels = parseLabelMap(match[2])
+    const value = Number(match[3])
     if (Number.isNaN(value)) return
 
     if (name === 'gickup_sources') summary.sources = value
@@ -705,15 +797,80 @@ const parseMetrics = (raw) => {
     if (name === 'gickup_jobs_complete') summary.jobsComplete = value
     if (name === 'gickup_job_duration_sum') durationSum = value
     if (name === 'gickup_job_duration_count') durationCount = value
-    if (name.startsWith('gickup_repo_success')) {
-      if (value === 1) repoOk += 1
+
+    if (name === 'gickup_repos_discovered') {
+      const source = labels.source_name || 'unknown'
+      reposDiscovered[source] = (reposDiscovered[source] || 0) + value
+    }
+
+    if (name === 'gickup_sources_complete') {
+      const source = labels.source_name || 'unknown'
+      sourcesComplete[source] = (sourcesComplete[source] || 0) + value
+    }
+
+    if (name === 'gickup_destinations_complete') {
+      const dest = labels.destination_type || 'unknown'
+      destinationsComplete[dest] = (destinationsComplete[dest] || 0) + value
+    }
+
+    if (name === 'gickup_repo_success') {
+      if (value === 1) {
+        repoOk += 1
+      } else {
+        repoFail += 1
+      }
+    }
+
+    if (name === 'gickup_repo_time') {
+      repoTimes.push({
+        hoster: labels.hoster || '',
+        repo: labels.repository || '',
+        owner: labels.owner || '',
+        type: labels.type || '',
+        path: labels.path || '',
+        seconds: value
+      })
     }
   })
 
   if (durationSum !== null && durationCount) {
     summary.avgDuration = `${(durationSum / durationCount).toFixed(2)}s`
   }
+
   summary.repoOk = repoOk || null
+  summary.repoFail = repoFail || null
+
+  const discoveredList = Object.keys(reposDiscovered).map((key) => ({
+    name: key,
+    value: reposDiscovered[key]
+  }))
+  const sourcesList = Object.keys(sourcesComplete).map((key) => ({
+    name: key,
+    value: sourcesComplete[key]
+  }))
+  const destinationsList = Object.keys(destinationsComplete).map((key) => ({
+    name: key,
+    value: destinationsComplete[key]
+  }))
+
+  const sortByValue = (a, b) => b.value - a.value
+  summary.reposDiscovered = discoveredList.sort(sortByValue)
+  summary.sourcesComplete = sourcesList.sort(sortByValue)
+  summary.destinationsComplete = destinationsList.sort(sortByValue)
+
+  summary.reposDiscoveredTotal = summary.reposDiscovered.reduce(
+    (total, item) => total + item.value,
+    0
+  )
+
+  summary.slowRepos = repoTimes
+    .sort((a, b) => b.seconds - a.seconds)
+    .slice(0, 5)
+    .map((item) => ({
+      name: item.repo ? `${item.owner}/${item.repo}` : item.path,
+      value: `${item.seconds.toFixed(2)}s`,
+      meta: item.type || item.hoster
+    }))
 
   return summary
 }
@@ -749,6 +906,9 @@ onBeforeUnmount(() => {
   clearInterval(poller)
 })
 </script>
+
+
+
 
 
 

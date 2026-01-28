@@ -358,6 +358,45 @@ textarea {
   font-size: 22px;
 }
 
+.metrics-detail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.metric-panel {
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.metric-panel h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+
+.metric-list {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.metric-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.metric-list .meta {
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .history {
   display: grid;
   gap: 12px;
