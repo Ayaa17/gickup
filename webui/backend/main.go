@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cooperspencer/gickup/webui"
+	"gick-web-ui/frontend"
 	"github.com/goccy/go-yaml"
 )
 
