@@ -171,6 +171,7 @@
           </div>
           <div class="controls" style="margin-top: 12px">
             <button class="btn" @click="applyForm">Generate YAML</button>
+            <button class="btn secondary" @click="fillFormFromYaml">Load From YAML</button>
             <button class="btn secondary" @click="resetForm">Reset</button>
           </div>
         </div>
@@ -185,6 +186,7 @@
           <div class="controls" style="margin-top: 12px">
             <button class="btn" @click="saveConfig">Save Config</button>
             <button class="btn secondary" @click="validateConfig">Validate</button>
+            <button class="btn secondary" @click="clearValidation">Clear Output</button>
             <a class="btn secondary" href="/api/config/download">Download</a>
           </div>
         </div>
@@ -193,7 +195,7 @@
           <div class="log-box">
             <div v-if="validation.valid === true" class="badge">Valid</div>
             <div v-else-if="validation.valid === false" class="badge warn">Invalid</div>
-            <pre>{{ validation.output || 'Run validation to see details.' }}</pre>
+            <pre v-html="validation.output || 'Run validation to see details.'"></pre>
           </div>
         </div>
       </div>
@@ -219,8 +221,11 @@
         </div>
         <div class="panel">
           <h2>Recent Logs</h2>
+          <div class="controls" style="margin-top: 8px">
+            <button class="btn secondary" @click="clearLogs">Clear Logs</button>
+          </div>
           <div class="log-box">
-            <pre>{{ logs.join('\n') }}</pre>
+            <pre v-html="logsHtml || ''"></pre>
           </div>
         </div>
       </div>
@@ -263,12 +268,15 @@
 
 <script setup>
 import { onMounted, onBeforeUnmount, reactive, ref } from 'vue'
+import yaml from 'js-yaml'
+import AnsiToHtml from 'ansi-to-html'
 
 const configText = ref('')
 const validation = reactive({ valid: null, output: '' })
 const status = reactive({ running: false })
 const history = ref([])
 const logs = ref([])
+const logsHtml = ref('')
 const metrics = reactive({
   sources: null,
   destinations: null,
@@ -278,6 +286,10 @@ const metrics = reactive({
   repoOk: null,
   raw: ''
 })
+
+const ansiConverter = new AnsiToHtml({ fg: '#e2e8f0', bg: '#0f172a', newline: true })
+
+const renderAnsi = (value) => ansiConverter.toHtml(value || '')
 
 const defaultForm = () => ({
   github: {
@@ -335,6 +347,7 @@ const loadConfig = async () => {
   const res = await fetch('/api/config')
   if (res.ok) {
     configText.value = await res.text()
+    fillFormFromYaml()
   }
 }
 
@@ -353,7 +366,12 @@ const validateConfig = async () => {
     body: configText.value
   })
   validation.valid = data.valid
-  validation.output = data.output
+  validation.output = renderAnsi(data.output || '')
+}
+
+const clearValidation = () => {
+  validation.valid = null
+  validation.output = ''
 }
 
 const splitList = (value) =>
@@ -479,6 +497,64 @@ const resetForm = () => {
   Object.assign(form, defaultForm())
 }
 
+const fillFormFromYaml = () => {
+  if (!configText.value.trim()) {
+    resetForm()
+    return
+  }
+
+  let parsed
+  try {
+    parsed = yaml.load(configText.value)
+  } catch (err) {
+    return
+  }
+  if (!parsed || typeof parsed !== 'object') {
+    return
+  }
+
+  const next = defaultForm()
+
+  const github = parsed?.source?.github?.[0] || {}
+  next.github.token = github.token || ''
+  next.github.tokenFile = github.token_file || ''
+  next.github.user = github.user || ''
+  next.github.username = github.username || ''
+  next.github.password = github.password || ''
+  next.github.ssh = !!github.ssh
+  next.github.sshkey = github.sshkey || ''
+  next.github.include = Array.isArray(github.include) ? github.include.join(', ') : ''
+  next.github.exclude = Array.isArray(github.exclude) ? github.exclude.join(', ') : ''
+  next.github.includeOrgs = Array.isArray(github.includeorgs) ? github.includeorgs.join(', ') : ''
+  next.github.excludeOrgs = Array.isArray(github.excludeorgs) ? github.excludeorgs.join(', ') : ''
+  next.github.wiki = !!github.wiki
+  next.github.issues = !!github.issues
+  next.github.starred = !!github.starred
+  next.github.gists = !!github.gists
+
+  const filter = github.filter || {}
+  next.github.filterStars = filter.stars || 0
+  next.github.filterLastActivity = filter.lastactivity || ''
+  next.github.filterLanguages = Array.isArray(filter.languages) ? filter.languages.join(', ') : ''
+  next.github.filterExcludeArchived = !!filter.excludearchived
+  next.github.filterExcludeForks = !!filter.excludeforks
+
+  const local = parsed?.destination?.local?.[0] || {}
+  next.local.path = local.path || ''
+  next.local.bare = !!local.bare
+  next.local.mirror = !!local.mirror
+  next.local.structured = !!local.structured
+  next.local.zip = !!local.zip
+  next.local.keep = local.keep || 0
+  next.local.lfs = !!local.lfs
+
+  next.cron = parsed?.cron || ''
+  next.prometheus.listen = parsed?.metrics?.prometheus?.listen_addr || ''
+  next.prometheus.endpoint = parsed?.metrics?.prometheus?.endpoint || ''
+
+  Object.assign(form, next)
+}
+
 const startBackup = async () => {
   await fetchJSON('/api/start', { method: 'POST' })
   await refreshAll()
@@ -500,7 +576,16 @@ const fetchHistory = async () => {
 
 const fetchLogs = async () => {
   const data = await fetchJSON('/api/logs?lines=200')
-  logs.value = data.lines || []
+  const lines = data.lines || []
+  logs.value = lines
+  const rawLogs = lines.join('\n')
+  const normalized = rawLogs.replace(/\\n/g, '\n')
+  logsHtml.value = renderAnsi(normalized)
+}
+
+const clearLogs = () => {
+  logs.value = []
+  logsHtml.value = ''
 }
 
 const parseMetrics = (raw) => {
@@ -575,4 +660,11 @@ onBeforeUnmount(() => {
   clearInterval(poller)
 })
 </script>
+
+
+
+
+
+
+
 

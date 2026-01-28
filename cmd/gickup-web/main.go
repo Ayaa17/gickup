@@ -256,7 +256,7 @@ func (s *server) handleStart(w http.ResponseWriter, r *http.Request) {
 		respondJSON(w, http.StatusConflict, state)
 		return
 	}
-	cmd := exec.Command(s.gickupBin, "--conf", s.configPath)
+	cmd := exec.Command(s.gickupBin, s.configPath)
 	cmd.Dir = filepath.Dir(s.configPath)
 	stdout, _ := cmd.StdoutPipe()
 	stderr, _ := cmd.StderrPipe()
