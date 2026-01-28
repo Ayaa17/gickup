@@ -42,6 +42,49 @@ textarea {
   gap: 24px;
 }
 
+.topbar {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--shadow);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.topbar p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+}
+
+.tab {
+  border: 1px solid var(--panel-border);
+  background: rgba(15, 23, 42, 0.8);
+  color: var(--text);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: var(--accent);
+  color: #0b1025;
+  border-color: transparent;
+}
+
 .hero {
   display: grid;
   gap: 16px;
@@ -63,6 +106,7 @@ textarea {
   background: radial-gradient(circle, rgba(255, 138, 61, 0.35), transparent 70%);
   top: -80px;
   right: -60px;
+  pointer-events: none;
 }
 
 .hero h1 {
@@ -162,8 +206,28 @@ textarea {
   font-size: 20px;
 }
 
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.panel-title h2 {
+  margin: 0;
+}
+
 .panel h3 {
   margin: 0 0 10px;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.hint.warn {
+  color: #fecaca;
 }
 
 .panel.inset {
@@ -211,6 +275,33 @@ textarea {
 .form-grid .checkbox input {
   width: 18px;
   height: 18px;
+}
+
+.extend {
+  margin-top: 20px;
+}
+
+.extend-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.extend-toggle span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.extend-body {
+  margin-top: 16px;
 }
 
 textarea {
@@ -270,6 +361,9 @@ textarea {
 .history {
   display: grid;
   gap: 12px;
+  max-height: 320px;
+  overflow: auto;
+  padding-right: 4px;
 }
 
 .history-item {
@@ -295,6 +389,16 @@ textarea {
   max-height: 240px;
   overflow: auto;
   font-size: 12px;
+}
+
+.log-box.metrics {
+  max-height: 260px;
+}
+
+.log-box.metrics pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .ansi-output {

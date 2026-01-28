@@ -1,10 +1,29 @@
 <template>
   <div class="app-shell fade-in">
-    <section class="hero">
+    <header class="topbar">
       <div>
         <h1>Gickup Control Room</h1>
         <p>Local operator console for configs, runs, and metrics.</p>
       </div>
+      <div class="tabs">
+        <button
+          class="tab"
+          :class="{ active: activeTab === 'config' }"
+          @click="setTab('config')"
+        >
+          Config
+        </button>
+        <button
+          class="tab"
+          :class="{ active: activeTab === 'dashboard' }"
+          @click="setTab('dashboard')"
+        >
+          Dashboard
+        </button>
+      </div>
+    </header>
+
+    <section v-if="activeTab === 'dashboard'" class="hero">
       <div class="status-bar">
         <div class="status-pill">
           <span class="status-dot" :class="{ running: status.running }"></span>
@@ -30,7 +49,7 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section v-if="activeTab === 'config'" class="panel">
       <h2>Config Builder (GitHub Source)</h2>
       <div class="split">
         <div class="panel inset">
@@ -44,6 +63,9 @@
               Token File
               <input v-model="form.github.tokenFile" type="text" placeholder="token.txt" />
             </label>
+            <div v-if="tokenConflict" class="hint warn">
+              Use either Token or Token File (not both).
+            </div>
             <label>
               User (target owner)
               <input v-model="form.github.user" type="text" placeholder="some-user" />
@@ -64,61 +86,6 @@
               SSH Key
               <input v-model="form.github.sshkey" type="text" placeholder="C:\\path\\to\\id_rsa" />
             </label>
-            <label>
-              Include Repos (comma separated)
-              <input v-model="form.github.include" type="text" placeholder="repo-a, repo-b" />
-            </label>
-            <label>
-              Exclude Repos (comma separated)
-              <input v-model="form.github.exclude" type="text" placeholder="repo-x, repo-y" />
-            </label>
-            <label>
-              Include Orgs (comma separated)
-              <input v-model="form.github.includeOrgs" type="text" placeholder="org-a, org-b" />
-            </label>
-            <label>
-              Exclude Orgs (comma separated)
-              <input v-model="form.github.excludeOrgs" type="text" placeholder="org-x, org-y" />
-            </label>
-            <label class="checkbox">
-              <input v-model="form.github.wiki" type="checkbox" />
-              Include Wiki
-            </label>
-            <label class="checkbox">
-              <input v-model="form.github.issues" type="checkbox" />
-              Include Issues (local only)
-            </label>
-            <label class="checkbox">
-              <input v-model="form.github.starred" type="checkbox" />
-              Include Starred
-            </label>
-            <label class="checkbox">
-              <input v-model="form.github.gists" type="checkbox" />
-              Include Gists
-            </label>
-          </div>
-          <h3 style="margin-top: 16px">Filter</h3>
-          <div class="form-grid">
-            <label>
-              Stars (min)
-              <input v-model.number="form.github.filterStars" type="number" min="0" />
-            </label>
-            <label>
-              Last Activity (e.g. 1y, 6M, 30d)
-              <input v-model="form.github.filterLastActivity" type="text" placeholder="1y" />
-            </label>
-            <label>
-              Languages (comma separated)
-              <input v-model="form.github.filterLanguages" type="text" placeholder="go, java" />
-            </label>
-            <label class="checkbox">
-              <input v-model="form.github.filterExcludeArchived" type="checkbox" />
-              Exclude Archived
-            </label>
-            <label class="checkbox">
-              <input v-model="form.github.filterExcludeForks" type="checkbox" />
-              Exclude Forks
-            </label>
           </div>
         </div>
 
@@ -129,31 +96,8 @@
               Path
               <input v-model="form.local.path" type="text" placeholder="D:\\gickup-backup" />
             </label>
-            <label class="checkbox">
-              <input v-model="form.local.bare" type="checkbox" />
-              Bare
-            </label>
-            <label class="checkbox">
-              <input v-model="form.local.mirror" type="checkbox" />
-              Mirror
-            </label>
-            <label class="checkbox">
-              <input v-model="form.local.structured" type="checkbox" />
-              Structured
-            </label>
-            <label class="checkbox">
-              <input v-model="form.local.zip" type="checkbox" />
-              Zip
-            </label>
-            <label>
-              Keep (days)
-              <input v-model.number="form.local.keep" type="number" min="0" />
-            </label>
-            <label class="checkbox">
-              <input v-model="form.local.lfs" type="checkbox" />
-              LFS
-            </label>
           </div>
+
           <h3 style="margin-top: 16px">Schedule & Metrics</h3>
           <div class="form-grid">
             <label>
@@ -173,12 +117,121 @@
             <button class="btn" @click="applyForm">Generate YAML</button>
             <button class="btn secondary" @click="fillFormFromYaml">Load From YAML</button>
             <button class="btn secondary" @click="resetForm">Reset</button>
+            <button
+              v-if="showGoDashboard"
+              class="btn secondary"
+              @click="setTab('dashboard')"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="extend">
+        <button class="extend-toggle" @click="showExtend = !showExtend">
+          Extend Settings
+          <span>{{ showExtend ? 'Hide' : 'Show' }}</span>
+        </button>
+        <div v-if="showExtend" class="extend-body">
+          <div class="split">
+            <div class="panel inset">
+              <h3>GitHub Options</h3>
+              <div class="form-grid">
+                <label>
+                  Include Repos (comma separated)
+                  <input v-model="form.github.include" type="text" placeholder="repo-a, repo-b" />
+                </label>
+                <label>
+                  Exclude Repos (comma separated)
+                  <input v-model="form.github.exclude" type="text" placeholder="repo-x, repo-y" />
+                </label>
+                <label>
+                  Include Orgs (comma separated)
+                  <input v-model="form.github.includeOrgs" type="text" placeholder="org-a, org-b" />
+                </label>
+                <label>
+                  Exclude Orgs (comma separated)
+                  <input v-model="form.github.excludeOrgs" type="text" placeholder="org-x, org-y" />
+                </label>
+                <label class="checkbox">
+                  <input v-model="form.github.wiki" type="checkbox" />
+                  Include Wiki
+                </label>
+                <label class="checkbox">
+                  <input v-model="form.github.issues" type="checkbox" />
+                  Include Issues (local only)
+                </label>
+                <label class="checkbox">
+                  <input v-model="form.github.starred" type="checkbox" />
+                  Include Starred
+                </label>
+                <label class="checkbox">
+                  <input v-model="form.github.gists" type="checkbox" />
+                  Include Gists
+                </label>
+              </div>
+
+              <h3 style="margin-top: 16px">Filter</h3>
+              <div class="form-grid">
+                <label>
+                  Stars (min)
+                  <input v-model.number="form.github.filterStars" type="number" min="0" />
+                </label>
+                <label>
+                  Last Activity (e.g. 1y, 6M, 30d)
+                  <input v-model="form.github.filterLastActivity" type="text" placeholder="1y" />
+                </label>
+                <label>
+                  Languages (comma separated)
+                  <input v-model="form.github.filterLanguages" type="text" placeholder="go, java" />
+                </label>
+                <label class="checkbox">
+                  <input v-model="form.github.filterExcludeArchived" type="checkbox" />
+                  Exclude Archived
+                </label>
+                <label class="checkbox">
+                  <input v-model="form.github.filterExcludeForks" type="checkbox" />
+                  Exclude Forks
+                </label>
+              </div>
+            </div>
+
+            <div class="panel inset">
+              <h3>Local Options</h3>
+              <div class="form-grid">
+                <label class="checkbox">
+                  <input v-model="form.local.bare" type="checkbox" />
+                  Bare
+                </label>
+                <label class="checkbox">
+                  <input v-model="form.local.mirror" type="checkbox" />
+                  Mirror
+                </label>
+                <label class="checkbox">
+                  <input v-model="form.local.structured" type="checkbox" />
+                  Structured
+                </label>
+                <label class="checkbox">
+                  <input v-model="form.local.zip" type="checkbox" />
+                  Zip
+                </label>
+                <label>
+                  Keep (days)
+                  <input v-model.number="form.local.keep" type="number" min="0" />
+                </label>
+                <label class="checkbox">
+                  <input v-model="form.local.lfs" type="checkbox" />
+                  LFS
+                </label>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="panel">
+    <section v-if="activeTab === 'config'" class="panel">
       <h2>Config Editor</h2>
       <div class="split">
         <div>
@@ -201,65 +254,68 @@
       </div>
     </section>
 
-    <section class="section-grid">
+    <section v-if="activeTab === 'dashboard'" class="section-grid">
       <div class="split">
         <div class="panel">
-          <h2>Run History</h2>
+          <div class="panel-title">
+            <h2>Run History</h2>
+            <button class="btn secondary" @click="clearHistory">Clear History</button>
+          </div>
           <div class="history">
             <div v-if="history.length === 0">No runs yet.</div>
             <div v-for="entry in history" :key="entry.id" class="history-item">
               <div>
                 <strong>{{ formatDate(entry.start_time) }}</strong>
-                <span v-if="entry.duration"> ¡P {{ entry.duration }}</span>
+                <span v-if="entry.duration"> {{ historySeparator }}{{ entry.duration }}</span>
               </div>
               <div class="meta">
-                Exit {{ entry.exit_code }} ¡P Stopped {{ entry.stopped ? 'yes' : 'no' }}
+                Exit {{ entry.exit_code }}{{ historySeparator }}Stopped {{ entry.stopped ? 'yes' : 'no' }}
               </div>
               <div class="meta" v-if="entry.error">{{ entry.error }}</div>
             </div>
           </div>
         </div>
         <div class="panel">
-          <h2>Recent Logs</h2>
-          <div class="controls" style="margin-top: 8px">
+          <div class="panel-title">
+            <h2>Recent Logs</h2>
             <button class="btn secondary" @click="clearLogs">Clear Logs</button>
           </div>
           <div class="log-box">
-            <pre v-html="logsHtml || ''"></pre>
+            <div class="ansi-output" v-html="logsHtml || ''"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="panel">
+    <section v-if="activeTab === 'dashboard'" class="panel">
       <h2>Prometheus Metrics</h2>
       <div class="metric-grid">
         <div class="metric-card">
           <h4>Sources</h4>
-          <strong>{{ metrics.sources ?? '¡X' }}</strong>
+          <strong>{{ metrics.sources ?? placeholder }}</strong>
         </div>
         <div class="metric-card">
           <h4>Destinations</h4>
-          <strong>{{ metrics.destinations ?? '¡X' }}</strong>
+          <strong>{{ metrics.destinations ?? placeholder }}</strong>
         </div>
         <div class="metric-card">
           <h4>Jobs Started</h4>
-          <strong>{{ metrics.jobsStarted ?? '¡X' }}</strong>
+          <strong>{{ metrics.jobsStarted ?? placeholder }}</strong>
         </div>
         <div class="metric-card">
           <h4>Jobs Complete</h4>
-          <strong>{{ metrics.jobsComplete ?? '¡X' }}</strong>
+          <strong>{{ metrics.jobsComplete ?? placeholder }}</strong>
         </div>
         <div class="metric-card">
           <h4>Avg Duration</h4>
-          <strong>{{ metrics.avgDuration ?? '¡X' }}</strong>
+          <strong>{{ metrics.avgDuration ?? placeholder }}</strong>
         </div>
         <div class="metric-card">
           <h4>Repos OK</h4>
-          <strong>{{ metrics.repoOk ?? '¡X' }}</strong>
+          <strong>{{ metrics.repoOk ?? placeholder }}</strong>
         </div>
       </div>
-      <div class="log-box" style="margin-top: 16px">
+      <div class="log-box metrics" style="margin-top: 16px">
         <pre>{{ metrics.raw || 'Metrics will appear once Prometheus is enabled and the backup is running.' }}</pre>
       </div>
     </section>
@@ -267,7 +323,7 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, reactive, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, reactive, ref } from 'vue'
 import yaml from 'js-yaml'
 import AnsiToHtml from 'ansi-to-html'
 
@@ -277,6 +333,8 @@ const status = reactive({ running: false })
 const history = ref([])
 const logs = ref([])
 const logsHtml = ref('')
+const historySeparator = ' \u00b7 '
+const placeholder = '\u2014'
 const metrics = reactive({
   sources: null,
   destinations: null,
@@ -286,6 +344,10 @@ const metrics = reactive({
   repoOk: null,
   raw: ''
 })
+
+const activeTab = ref('config')
+const showExtend = ref(false)
+const showGoDashboard = ref(false)
 
 const ansiConverter = new AnsiToHtml({ fg: '#e2e8f0', bg: '#0f172a', newline: true })
 
@@ -332,6 +394,10 @@ const defaultForm = () => ({
 
 const form = reactive(defaultForm())
 
+const tokenConflict = computed(
+  () => form.github.token.trim() !== '' && form.github.tokenFile.trim() !== ''
+)
+
 let poller
 
 const fetchJSON = async (url, options) => {
@@ -343,12 +409,28 @@ const fetchJSON = async (url, options) => {
   return res.json()
 }
 
+const setTab = (tab) => {
+  activeTab.value = tab
+  if (tab === 'dashboard') {
+    refreshAll()
+  }
+}
+
 const loadConfig = async () => {
   const res = await fetch('/api/config')
   if (res.ok) {
     configText.value = await res.text()
-    fillFormFromYaml()
+  } else {
+    configText.value = ''
   }
+
+  if (configText.value.trim().length === 0) {
+    activeTab.value = 'config'
+  } else {
+    activeTab.value = 'dashboard'
+  }
+
+  fillFormFromYaml()
 }
 
 const saveConfig = async () => {
@@ -491,6 +573,7 @@ const applyForm = () => {
   }
 
   configText.value = `${lines.join('\n')}\n`
+  showGoDashboard.value = true
 }
 
 const resetForm = () => {
@@ -574,6 +657,11 @@ const fetchHistory = async () => {
   history.value = await fetchJSON('/api/history')
 }
 
+const clearHistory = async () => {
+  await fetchJSON('/api/history/clear', { method: 'POST' })
+  history.value = []
+}
+
 const fetchLogs = async () => {
   const data = await fetchJSON('/api/logs?lines=200')
   const lines = data.lines || []
@@ -583,7 +671,8 @@ const fetchLogs = async () => {
   logsHtml.value = renderAnsi(normalized)
 }
 
-const clearLogs = () => {
+const clearLogs = async () => {
+  await fetchJSON('/api/logs/clear', { method: 'POST' })
   logs.value = []
   logsHtml.value = ''
 }
@@ -660,7 +749,6 @@ onBeforeUnmount(() => {
   clearInterval(poller)
 })
 </script>
-
 
 
 

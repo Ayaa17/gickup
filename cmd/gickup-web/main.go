@@ -98,7 +98,9 @@ func main() {
 	mux.HandleFunc("/api/config/download", srv.handleConfigDownload)
 	mux.HandleFunc("/api/validate", srv.handleValidate)
 	mux.HandleFunc("/api/history", srv.handleHistory)
+	mux.HandleFunc("/api/history/clear", srv.handleHistoryClear)
 	mux.HandleFunc("/api/logs", srv.handleLogs)
+	mux.HandleFunc("/api/logs/clear", srv.handleLogsClear)
 	mux.HandleFunc("/api/metrics", srv.handleMetrics)
 	mux.Handle("/", srv.handleStatic())
 
@@ -318,6 +320,17 @@ func (s *server) handleHistory(w http.ResponseWriter, _ *http.Request) {
 	respondJSON(w, http.StatusOK, history)
 }
 
+func (s *server) handleHistoryClear(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	s.saveHistory([]historyEntry{})
+
+	respondJSON(w, http.StatusOK, map[string]string{"status": "cleared"})
+}
+
 func (s *server) handleLogs(w http.ResponseWriter, r *http.Request) {
 	lines := 200
 	if param := r.URL.Query().Get("lines"); param != "" {
@@ -340,6 +353,19 @@ func (s *server) handleLogs(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"lines": s.logLines[start:],
 	})
+}
+
+func (s *server) handleLogsClear(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	s.mu.Lock()
+	s.logLines = []string{}
+	s.mu.Unlock()
+
+	respondJSON(w, http.StatusOK, map[string]string{"status": "cleared"})
 }
 
 func (s *server) handleMetrics(w http.ResponseWriter, _ *http.Request) {
