@@ -11,6 +11,11 @@ For core backup features and configuration details, please refer to the upstream
 - Live dashboard for status, history, logs, and Prometheus metrics
 - YAML file picker + form-based config builder
 
+<p float="left">
+  <img src="./assets/demo-config.png" height="400" />
+  <img src="./assets/demo-dashboard.png" height="400" />
+</p>
+
 ## Requirements
 
 - Go 1.22+
