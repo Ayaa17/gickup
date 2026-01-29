@@ -62,6 +62,22 @@ or
 
 Open: `http://localhost:3780`
 
+## Run on Docker
+
+### start service
+
+```bash
+docker-compose -f docker-compose-webui up -d
+```
+
+Open: [http://localhost:3780/](http://localhost:3780/)
+
+### stop services
+
+```bash
+docker-compose -f docker-compose-webui down
+```
+
 ## Web UI Usage
 
 ### Config Page
