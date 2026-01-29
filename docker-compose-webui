@@ -1,0 +1,11 @@
+services:
+  gickup-webui:
+    build:
+      context: .
+      dockerfile: dockerfile.webui
+    ports:
+      - "3780:3780"
+    volumes:
+      - ./conf.yml:/app/conf.yml
+      - ./.gickup-ui:/app/.gickup-ui
+    command: ["./gickup-web", "--conf", "/app/conf.yml", "--listen", ":3780", "--gickup-bin", "/app/gickup"]
