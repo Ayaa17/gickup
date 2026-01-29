@@ -1,127 +1,103 @@
-<h1 align="center">
-    <img src="https://github.com/cooperspencer/gickup/blob/main/gickup.png" style="width: 20%;" alt="logo">
-    <br/>
-    GICKUP
-</h1>
+# Gickup Web UI
 
-<h4 align="center">
-    Backup your Git repositories with ease.
-</h4>
+This fork adds a local Web UI wrapper for the original Gickup backup tool.  
+For core backup features and configuration details, please refer to the upstream project.
 
+- Upstream: https://github.com/cooperspencer/gickup
 
-<p align="center">
-    <strong>
-        <a href="https://cooperspencer.github.io/gickup-documentation/" target="_blank">Website</a>
-        •
-        <a href="https://github.com/cooperspencer/gickup/">GitHub</a>
-        •
-        <a href="https://cooperspencer.github.io/gickup-documentation/" target="_blank">Docs</a>
-    </strong>
-</p>
+## What This Fork Adds
 
-<p align="center">
-    <a href="https://github.com/cooperspencer/gickup/actions/workflows/docker.yml">
-        <img alt="Build and Publish" src="https://github.com/cooperspencer/gickup/actions/workflows/docker.yml/badge.svg">
-    </a>
-</p>
+- A local Web UI to configure, validate, and run backups
+- Live dashboard for status, history, logs, and Prometheus metrics
+- YAML file picker + form-based config builder
 
+## Requirements
 
+- Go 1.22+
+- Node.js (for building the frontend)
 
-## What is GICKUP?
-Gickup is a tool that allows you to clone/mirror repositories from one hoster to another.
-This is useful if you want to have a backup of your repositories on another hoster or to a local server.
+## Build the gickup
 
-
-### Supported Source and Destionations
-You can clone/mirror repositories from:
-- Github
-- Gitlab
-- Gitea
-- Gogs
-- Bitbucket
-- OneDev
-- Sourcehut
-- Any
-
-You can clone/mirror repositories to:
-- Github
-- Gitlab
-- Gitea
-- Gogs
-- OneDev
-- Sourcehut
-- Local
-- S3
-
-
-If your hoster is not listed, feel free to open an issue and I will add it.
-
-
-
-## How to make a configuration file
-[Here is an example](https://github.com/cooperspencer/gickup/blob/main/conf.example.yml)
-
-## How to run the binary version
-`./gickup path-to-conf.yml`
-
-## How to run the Docker image
 ```bash
-mkdir gickup
-wget https://raw.githubusercontent.com/cooperspencer/gickup/main/docker-compose.yml
-nano conf.yml # Make your config here
-docker-compose up
+go build .
 ```
-## Compile the binary version
-`go build .`
 
-## Web UI (local wrapper)
-Build the web UI assets:
+## Build the Web UI
+
 ```bash
-cd webui
+cd webui/frontend
 npm install
 npm run build
 ```
 
-Build and run the wrapper:
+## Build the Web UI Backend
+
+### Windows
+
 ```bash
-go build -o gickup-web ./cmd/gickup-web
+cd webui
+go build -o ../gickup-web.exe ./backend
+```
+
+### Linux
+
+```bash
+cd webui
+go build -o ../gickup-web ./backend
+```
+
+## Run
+
+```bash
+# windows
+./gickup-web.exe --conf conf.yml --listen :3780
+```
+
+or
+
+```bash
+# linux
 ./gickup-web --conf conf.yml --listen :3780
 ```
-The wrapper runs `gickup` via `exec.Command()`. Ensure `gickup` is on PATH or pass `--gickup-bin`.
 
-### Web UI Usage
-Open `http://localhost:3780` and use the **Config Builder (GitHub Source)** panel to fill in GitHub + Local settings.
-Click **Generate YAML** to populate the Config Editor, then:
-- **Save Config** to write `conf.yml`
-- **Validate** to run a dry-run
-- **Download** to export the YAML
-Use **Start Backup** / **Stop Backup** to control runs and view history/logs/metrics.
+Open: `http://localhost:3780`
 
-## Compile the Docker Image
-```bash
-git clone https://github.com/cooperspencer/gickup.git
-cd gickup
-nano docker-compose.yml # Uncomment the Build
-nano conf.yml # Make your config here
-docker-compose build
-docker-compose up
-```
+## Web UI Usage
 
-## Questions?
-If anything is unclear or you have a great idea for the project, feel free to open a discussion about it.
-https://github.com/cooperspencer/gickup/discussions
+### Config Page
 
-## Distribution Packages
-|Distribution|Package|Maintainer|
-|---|---|---|
-|Arch|[gickup](https://aur.archlinux.org/packages/gickup/)|[me](https://github.com/cooperspencer)|
-|Homebrew|[gickup](https://formulae.brew.sh/formula/gickup#default)||
-|Fedora|[gickup](https://copr.fedorainfracloud.org/coprs/frostyx/gickup/)|[FrostyX](https://github.com/FrostyX)|
+- Use the left-side form to fill GitHub + Local destination + Cron + Prometheus.
+- Optional settings are under **Extend Settings**.
+- Click **Load From YAML** to select an existing `.yml/.yaml` file.
+- The right panel shows **Live YAML** and **Validation Output**.
+- **Save Config** writes `conf.yml`.
+- **Validate** runs a dry run using the current YAML.
+- **Download** exports the YAML.
 
-## Issues
-The mirroring to Gitlab doesn't work, or at least I can't test it properly because I have no access to a Gitlab EE instance.
+### Dashboard Page
 
-## Future Ideas
-- Additional VCS
-  - [GitBucket](https://gitbucket.github.io/)
-- Add minio as a destination
+- Start/stop backups and check live status
+- View run history
+- View recent logs (ANSI color supported)
+- View Prometheus metrics (summary + details)
+
+## Notes
+
+- Prometheus metrics require `metrics.prometheus.listen_addr` and `endpoint` in `conf.yml`.
+- Prometheus is only served when `cron` is configured (because Gickup stays running).
+
+## License
+
+Copyright 2026 Aya
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

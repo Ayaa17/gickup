@@ -6,3 +6,5 @@ conf.yml
 dist/
 .vscode
 webui/frontend/node_modules/
+gickup-web.exe
+.gickup-ui/
